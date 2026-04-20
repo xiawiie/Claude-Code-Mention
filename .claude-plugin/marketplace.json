@@ -1,7 +1,7 @@
 {
   "name": "claude-code-mention",
   "owner": {
-    "name": "Wei"
+    "name": "xiawiie"
   },
   "metadata": {
     "description": "Windows notifications for Claude Code",
@@ -14,7 +14,7 @@
       "description": "Windows notifications for Claude Code events using native Windows APIs",
       "version": "1.0.0",
       "author": {
-        "name": "Wei"
+        "name": "xiawiie"
       },
       "license": "MIT",
       "keywords": ["windows", "notifications", "hooks"]

@@ -65,6 +65,114 @@ function Get-ClaudeMentionCustomSoundPath {
   return $path
 }
 
+function Test-ClaudeMentionSilentSound {
+  param(
+    [string]$SoundFile
+  )
+
+  if ([string]::IsNullOrWhiteSpace($SoundFile)) {
+    return $false
+  }
+
+  $normalized = $SoundFile.Trim().ToLowerInvariant()
+  return $normalized -in @("silent", "mute", "muted", "off", "none")
+}
+
+function Get-ClaudeMentionConfiguredSoundFile {
+  param(
+    [string]$PluginRoot,
+
+    [ValidateSet("notification", "stop")]
+    [string]$EventName
+  )
+
+  if ([string]::IsNullOrWhiteSpace($PluginRoot)) {
+    return $null
+  }
+
+  $configPath = Join-Path (Join-Path $PluginRoot "sounds") "config.json"
+  if (!(Test-Path -LiteralPath $configPath)) {
+    return $null
+  }
+
+  try {
+    $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+  } catch {
+    return $null
+  }
+
+  $value = if ($EventName -eq "notification") {
+    $config.notification
+  } else {
+    $config.stop
+  }
+
+  if ([string]::IsNullOrWhiteSpace($value)) {
+    return $null
+  }
+
+  return [string]$value
+}
+
+function Get-ClaudeMentionEventSoundPath {
+  param(
+    [string]$PluginRoot,
+
+    [ValidateSet("notification", "stop")]
+    [string]$EventName,
+
+    [string]$EnvironmentSoundFile
+  )
+
+  if ($env:CLAUDE_MENTION_SOUND -eq "0") {
+    return $null
+  }
+
+  $soundPath = Get-ClaudeMentionCustomSoundPath $EnvironmentSoundFile $PluginRoot
+  if ($soundPath) {
+    return $soundPath
+  }
+
+  $configuredFile = Get-ClaudeMentionConfiguredSoundFile $PluginRoot $EventName
+  return Get-ClaudeMentionCustomSoundPath $configuredFile $PluginRoot
+}
+
+function Get-ClaudeMentionEventSoundMode {
+  param(
+    [string]$PluginRoot,
+
+    [ValidateSet("notification", "stop")]
+    [string]$EventName,
+
+    [string]$EnvironmentSoundFile
+  )
+
+  if ($env:CLAUDE_MENTION_SOUND -eq "0") {
+    return "silent"
+  }
+
+  if (Test-ClaudeMentionSilentSound $EnvironmentSoundFile) {
+    return "silent"
+  }
+
+  $environmentPath = Get-ClaudeMentionCustomSoundPath $EnvironmentSoundFile $PluginRoot
+  if ($environmentPath) {
+    return "file"
+  }
+
+  $configuredFile = Get-ClaudeMentionConfiguredSoundFile $PluginRoot $EventName
+  if (Test-ClaudeMentionSilentSound $configuredFile) {
+    return "silent"
+  }
+
+  $configuredPath = Get-ClaudeMentionCustomSoundPath $configuredFile $PluginRoot
+  if ($configuredPath) {
+    return "file"
+  }
+
+  return "default"
+}
+
 function Invoke-ClaudeMentionCustomSound {
   param(
     [string]$SoundPath

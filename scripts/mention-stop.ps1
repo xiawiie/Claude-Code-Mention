@@ -22,8 +22,9 @@ $message = "Finished responding"
 $imageXml = if (Test-Path $iconPath) {
   "<image placement=`"appLogoOverride`" src=`"file:///$($iconPath -replace '\\','/')`"/>"
 } else { "" }
-$customSoundPath = Get-ClaudeMentionCustomSoundPath $env:CLAUDE_MENTION_STOP_SOUND_FILE $pluginRoot
-$audioXml = if ($customSoundPath) {
+$customSoundPath = Get-ClaudeMentionEventSoundPath $pluginRoot "stop" $env:CLAUDE_MENTION_STOP_SOUND_FILE
+$soundMode = Get-ClaudeMentionEventSoundMode $pluginRoot "stop" $env:CLAUDE_MENTION_STOP_SOUND_FILE
+$audioXml = if ($soundMode -eq "silent" -or $customSoundPath) {
   '<audio silent="true" />'
 } else {
   Get-ClaudeMentionAudioXml "ms-winsoundevent:Notification.Default" $env:CLAUDE_MENTION_STOP_SOUND
@@ -48,4 +49,6 @@ $xml.LoadXml($notificationXmlText)
 $notification = [Windows.UI.Notifications.ToastNotification]::new($xml)
 $appId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId).Show($notification)
-Invoke-ClaudeMentionCustomSound $customSoundPath > $null
+if ($soundMode -eq "file") {
+  Invoke-ClaudeMentionCustomSound $customSoundPath > $null
+}

@@ -1,16 +1,17 @@
 # claude-code-mention
 
-`claude-code-mention` 是一个适用于 Windows 的 Claude Code 通知插件。它通过 Claude Code hooks 监听事件，在需要你处理消息或 Claude Code 回复完成时弹出 Windows 通知，并播放提示音。
+`claude-code-mention` 是一个适用于 Windows 的 Claude Code 通知插件。它通过 Claude Code hooks 监听事件，在 Claude Code 需要你处理消息或回复完成时弹出 Windows 通知，并播放提示音。
 
-作者：Wei
+作者 / GitHub：xiawiie
 
 ## 功能特性
 
 - **注意力提醒**：Claude Code 触发 `Notification` 事件时弹出 Windows 通知，例如需要输入、需要工具权限确认等场景。
 - **完成提醒**：Claude Code 触发 `Stop` 事件时弹出 “Finished responding” 通知。
-- **系统默认提示音**：未做任何配置时，插件使用当前 Windows 通知提示音，也就是系统声音方案里的 `Notification.Default`。
-- **五个内置备选音效**：`sounds` 文件夹内提供 5 个本项目生成的 `.wav` 音效，可直接选择使用。
-- **自定义提示音**：支持使用插件 `sounds` 文件夹中的 `.wav` 文件，也支持 Windows 内置 `ms-winsoundevent:` 音效。
+- **默认使用系统通知音**：未配置时使用当前电脑的 Windows 通知提示音 `ms-winsoundevent:Notification.Default`。
+- **简单音效配置**：只需要编辑 `sounds\config.json`，不用手动设置环境变量。
+- **五个内置备选音效**：`sounds` 文件夹内提供 5 个本项目生成的 `.wav` 音效。
+- **支持静默通知**：可以单独设置注意力提醒或完成提醒为只弹窗、不播放声音。
 - **无第三方 PowerShell 依赖**：使用 Windows 原生通知 API 和 PowerShell 标准能力。
 
 ## 系统要求
@@ -36,6 +37,7 @@ claude-code-mention/
 |   +-- mention-stop.ps1
 +-- sounds/
 |   +-- README.md
+|   +-- config.json
 |   +-- bright-ping.wav
 |   +-- calm-bell.wav
 |   +-- crystal-drop.wav
@@ -49,32 +51,30 @@ claude-code-mention/
 
 ## 安装方式
 
-### 方式一：从 GitHub 仓库安装
+### 从 GitHub 安装
 
-如果你把项目上传到了 GitHub，例如仓库地址是：
+仓库地址：
 
 ```text
-https://github.com/Wei/claude-code-mention
+https://github.com/xiawiie/Claude-Code-Mention
 ```
 
-可以在 Claude Code 中执行：
+在 Claude Code 中执行：
 
 ```bash
-/plugin install Wei/claude-code-mention
+/plugin install xiawiie/Claude-Code-Mention
 ```
 
 如果你使用 marketplace 方式：
 
 ```bash
-/plugin marketplace add Wei/claude-code-mention
+/plugin marketplace add xiawiie/Claude-Code-Mention
 /plugin install mention-notifications@claude-code-mention
 ```
 
-如果你的 GitHub 用户名或仓库名不同，请把 `Wei/claude-code-mention` 替换成你自己的 `用户名/仓库名`。
+### 本地安装
 
-### 方式二：本地安装
-
-如果项目还在本机目录中，例如：
+如果项目在本机目录中，例如：
 
 ```text
 E:\Data\ChromeDownload\claude-code-mention
@@ -87,16 +87,14 @@ E:\Data\ChromeDownload\claude-code-mention
 /plugin install mention-notifications@claude-code-mention
 ```
 
-也可以把路径换成你实际放置项目的位置。
-
 ## 使用方式
 
 安装后不需要手动运行脚本。Claude Code 触发 hook 时，插件会自动执行：
 
 | Claude Code 事件 | 执行脚本 | 效果 |
 | --- | --- | --- |
-| `Notification` | `scripts\mention-notification.ps1` | 弹出注意力提醒，并播放提示音 |
-| `Stop` | `scripts\mention-stop.ps1` | 弹出完成提醒，并播放提示音 |
+| `Notification` | `scripts\mention-notification.ps1` | 弹出注意力提醒 |
+| `Stop` | `scripts\mention-stop.ps1` | 弹出完成提醒 |
 
 默认情况下，两个事件都会使用当前 Windows 通知提示音：
 
@@ -106,32 +104,33 @@ ms-winsoundevent:Notification.Default
 
 这个值会跟随你当前电脑的 Windows 声音方案。插件不会把 Windows 系统音频文件复制进仓库，避免上传 GitHub 时产生版权风险。
 
-## 提示音配置
+## 最简单的提示音设置方式
 
-声音选择优先级如下：
+以后要改提示音，只需要编辑这个文件：
 
-1. `CLAUDE_MENTION_SOUND=0`：完全静音。
-2. 用户配置的 `.wav` 文件：`CLAUDE_MENTION_NOTIFICATION_SOUND_FILE` 或 `CLAUDE_MENTION_STOP_SOUND_FILE`。
-3. 用户配置的 Windows 内置音效：`CLAUDE_MENTION_NOTIFICATION_SOUND` 或 `CLAUDE_MENTION_STOP_SOUND`。
-4. 未做配置时，使用当前 Windows 通知提示音 `ms-winsoundevent:Notification.Default`。
-
-### 临时关闭声音
-
-只在当前终端会话中生效：
-
-```powershell
-$env:CLAUDE_MENTION_SOUND = "0"
+```text
+sounds\config.json
 ```
 
-重新启用：
+默认内容是：
 
-```powershell
-$env:CLAUDE_MENTION_SOUND = "1"
+```json
+{
+  "notification": "",
+  "stop": ""
+}
 ```
 
-### 选择内置备选音效
+含义：
 
-`sounds` 文件夹中已经生成了 5 个可选音效：
+| 字段 | 控制事件 | 留空时 |
+| --- | --- | --- |
+| `notification` | Claude Code 需要你注意时的通知 | 使用当前 Windows 通知提示音 |
+| `stop` | Claude Code 回复完成时的通知 | 使用当前 Windows 通知提示音 |
+
+### 选择内置音效
+
+`sounds` 文件夹中有 5 个可选音效：
 
 | 文件名 | 名字 | 风格 |
 | --- | --- | --- |
@@ -143,17 +142,51 @@ $env:CLAUDE_MENTION_SOUND = "1"
 
 例如，把注意力提醒改成 `bright-ping.wav`，把完成提醒改成 `soft-complete.wav`：
 
-```powershell
-$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "bright-ping.wav"
-$env:CLAUDE_MENTION_STOP_SOUND_FILE = "soft-complete.wav"
+```json
+{
+  "notification": "bright-ping.wav",
+  "stop": "soft-complete.wav"
+}
 ```
 
-也可以写成插件相对路径：
+保存 `sounds\config.json` 后，下次 Claude Code 触发通知就会使用新音效。
 
-```powershell
-$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "sounds\bright-ping.wav"
-$env:CLAUDE_MENTION_STOP_SOUND_FILE = "sounds\soft-complete.wav"
+### 设置静默通知
+
+如果你希望只弹窗、不播放声音，把对应字段写成 `silent`：
+
+```json
+{
+  "notification": "bright-ping.wav",
+  "stop": "silent"
+}
 ```
+
+上面的配置表示：
+
+- `Notification` 事件播放 `bright-ping.wav`
+- `Stop` 事件只弹出通知，不播放声音
+
+也可以两个都静默：
+
+```json
+{
+  "notification": "silent",
+  "stop": "silent"
+}
+```
+
+可用的静默值包括：
+
+```text
+silent
+mute
+muted
+off
+none
+```
+
+推荐统一使用 `silent`。
 
 ### 使用自己的 WAV 文件
 
@@ -164,65 +197,59 @@ sounds\my-attention.wav
 sounds\my-finished.wav
 ```
 
-然后设置：
+然后把 `sounds\config.json` 改成：
 
-```powershell
-$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "my-attention.wav"
-$env:CLAUDE_MENTION_STOP_SOUND_FILE = "my-finished.wav"
+```json
+{
+  "notification": "my-attention.wav",
+  "stop": "my-finished.wav"
+}
 ```
 
-也可以使用绝对路径：
+建议在 `config.json` 中只写文件名，不写 `sounds\...` 路径，这样最不容易出错。
 
-```powershell
-$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "E:\Sounds\my-attention.wav"
-$env:CLAUDE_MENTION_STOP_SOUND_FILE = "E:\Sounds\my-finished.wav"
+### 恢复系统默认通知音
+
+把字段改回空字符串即可：
+
+```json
+{
+  "notification": "",
+  "stop": ""
+}
 ```
 
-### 持久化自定义声音
+## 高级配置：环境变量
 
-如果想让设置长期生效，写入 Windows 用户环境变量：
+一般用户只需要改 `sounds\config.json`。环境变量保留给高级用法或临时测试。
 
-```powershell
-[Environment]::SetEnvironmentVariable(
-  "CLAUDE_MENTION_NOTIFICATION_SOUND_FILE",
-  "bright-ping.wav",
-  "User"
-)
-
-[Environment]::SetEnvironmentVariable(
-  "CLAUDE_MENTION_STOP_SOUND_FILE",
-  "soft-complete.wav",
-  "User"
-)
-```
-
-设置后请重启 Claude Code，或打开一个新的终端窗口。
-
-清除持久化配置：
+完全静音：
 
 ```powershell
-[Environment]::SetEnvironmentVariable("CLAUDE_MENTION_NOTIFICATION_SOUND_FILE", $null, "User")
-[Environment]::SetEnvironmentVariable("CLAUDE_MENTION_STOP_SOUND_FILE", $null, "User")
+$env:CLAUDE_MENTION_SOUND = "0"
 ```
 
-### 使用 Windows 内置音效
+临时指定某个 `.wav` 文件：
 
-如果你不想使用 `.wav` 文件，也可以指定 Windows 内置音效：
+```powershell
+$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "bright-ping.wav"
+$env:CLAUDE_MENTION_STOP_SOUND_FILE = "soft-complete.wav"
+```
+
+临时指定 Windows 内置音效：
 
 ```powershell
 $env:CLAUDE_MENTION_NOTIFICATION_SOUND = "ms-winsoundevent:Notification.Reminder"
 $env:CLAUDE_MENTION_STOP_SOUND = "ms-winsoundevent:Notification.Default"
 ```
 
-常用值：
+声音选择优先级：
 
-```text
-ms-winsoundevent:Notification.Default
-ms-winsoundevent:Notification.IM
-ms-winsoundevent:Notification.Mail
-ms-winsoundevent:Notification.Reminder
-ms-winsoundevent:Notification.SMS
-```
+1. `CLAUDE_MENTION_SOUND=0`：完全静音。
+2. 环境变量中的 `.wav` 文件。
+3. `sounds\config.json` 中的文件名或 `silent`。
+4. 环境变量中的 Windows 内置音效。
+5. 当前 Windows 通知提示音 `ms-winsoundevent:Notification.Default`。
 
 ## 自定义音效来源
 
@@ -251,24 +278,10 @@ ms-winsoundevent:Notification.SMS
   powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\mention-notification.ps1
 ```
 
-正常情况下，你应该看到一条 Windows 通知，并听到当前 Windows 通知提示音，除非你配置了自定义 `.wav` 文件。
-
 ### 测试完成提醒
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\mention-stop.ps1
-```
-
-正常情况下，你应该看到 “Finished responding” 通知，并听到当前 Windows 通知提示音，除非你配置了自定义 `.wav` 文件。
-
-### 测试某个备选音效
-
-```powershell
-$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "gentle-chime.wav"
-
-@{ message = "Sound choice test"; notification_type = "info" } |
-  ConvertTo-Json -Compress |
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\mention-notification.ps1
 ```
 
 ### 测试音频配置逻辑
@@ -299,11 +312,12 @@ Mention audio tests passed
 
 请检查：
 
-- 系统音量和通知音量是否为 0。
+- `sounds\config.json` 是否把对应字段设置成了 `silent`。
 - `CLAUDE_MENTION_SOUND` 是否被设置为 `0`。
+- 系统音量和通知音量是否为 0。
 - 自定义 `.wav` 文件是否存在。
 - 自定义 `.wav` 文件是否损坏。
-- 如果使用自定义文件，路径是否正确。
+- `config.json` 是否是合法 JSON。
 
 可以用以下方式验证 `.wav` 文件是否能加载：
 
@@ -313,9 +327,15 @@ $player.Load()
 $player.PlaySync()
 ```
 
-### 自定义 MP3 没有声音
+### 修改 config.json 后没有生效
 
-本插件的本地自定义音效只支持 `.wav`。如果你下载的是 `.mp3`，需要先转换成 `.wav`。转换方法见 [sounds/README.md](sounds/README.md)。
+请检查：
+
+- 文件路径是否是 `sounds\config.json`。
+- JSON 中字符串是否使用英文双引号。
+- 是否多写了逗号。
+- 文件名是否和 `sounds` 文件夹里的 `.wav` 完全一致。
+- 如果你用了环境变量，环境变量会优先于 `config.json`。
 
 ### PowerShell 提示脚本未签名
 
@@ -344,6 +364,7 @@ hooks/hooks.json
 scripts/mention-audio.ps1
 scripts/mention-notification.ps1
 scripts/mention-stop.ps1
+sounds/config.json
 sounds/bright-ping.wav
 sounds/calm-bell.wav
 sounds/crystal-drop.wav
@@ -353,8 +374,6 @@ sounds/README.md
 README.md
 LICENSE
 ```
-
-如果你的 GitHub 用户名不是 `Wei`，请同步修改 README 中的安装命令，以及 `.claude-plugin\marketplace.json` / `.claude-plugin\plugin.json` 中的作者或 owner 信息。
 
 ## 许可证
 

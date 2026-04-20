@@ -1,21 +1,30 @@
 # sounds 音效目录说明
 
-这个目录用于存放 `claude-code-mention` 的 `.wav` 提示音文件。
-
-## 默认音效说明
-
-插件默认不复制 Windows 系统音频文件，也不把系统音频文件放进仓库。
-
-未配置自定义音效时，插件使用当前电脑的 Windows 通知提示音：
+这个目录用于存放 `claude-code-mention` 的 `.wav` 提示音文件，也包含最简单的音效配置文件：
 
 ```text
-ms-winsoundevent:Notification.Default
+config.json
 ```
 
-这样做有两个好处：
+## 最简单的设置方式
 
-- 会跟随你当前 Windows 声音方案。
-- 不会把 Windows 系统媒体文件复制到 GitHub 仓库里，避免版权风险。
+打开 `sounds\config.json`：
+
+```json
+{
+  "notification": "",
+  "stop": ""
+}
+```
+
+两个字段的含义：
+
+| 字段 | 控制事件 | 留空时 |
+| --- | --- | --- |
+| `notification` | Claude Code 需要你注意时的通知 | 使用当前 Windows 通知提示音 |
+| `stop` | Claude Code 回复完成时的通知 | 使用当前 Windows 通知提示音 |
+
+要换声音，只需要把字段改成这个文件夹里的 `.wav` 文件名。
 
 ## 本目录中的可选音效
 
@@ -31,44 +40,62 @@ ms-winsoundevent:Notification.Default
 
 这些音频是项目内生成的短提示音，随项目一起按 MIT License 发布。
 
-## 选择一个备选音效
+## 配置示例
 
-例如，把注意力提醒改成 `bright-ping.wav`：
+### 注意力提醒用明亮提示，完成提醒用柔和完成
 
-```powershell
-$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "bright-ping.wav"
+```json
+{
+  "notification": "bright-ping.wav",
+  "stop": "soft-complete.wav"
+}
 ```
 
-把完成提醒改成 `soft-complete.wav`：
+### 注意力提醒有声音，完成提醒静默
 
-```powershell
-$env:CLAUDE_MENTION_STOP_SOUND_FILE = "soft-complete.wav"
+```json
+{
+  "notification": "bright-ping.wav",
+  "stop": "silent"
+}
 ```
 
-也可以写成插件相对路径：
+### 两个通知都静默
 
-```powershell
-$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "sounds\bright-ping.wav"
-$env:CLAUDE_MENTION_STOP_SOUND_FILE = "sounds\soft-complete.wav"
+```json
+{
+  "notification": "silent",
+  "stop": "silent"
+}
 ```
 
-如果想长期生效，写入 Windows 用户环境变量：
+### 恢复系统默认通知音
 
-```powershell
-[Environment]::SetEnvironmentVariable(
-  "CLAUDE_MENTION_NOTIFICATION_SOUND_FILE",
-  "bright-ping.wav",
-  "User"
-)
-
-[Environment]::SetEnvironmentVariable(
-  "CLAUDE_MENTION_STOP_SOUND_FILE",
-  "soft-complete.wav",
-  "User"
-)
+```json
+{
+  "notification": "",
+  "stop": ""
+}
 ```
 
-设置后请重启 Claude Code，或打开新的终端窗口。
+## 静默选项
+
+如果你希望只弹出通知、不播放声音，可以把字段写成：
+
+```text
+silent
+```
+
+也支持这些同义值：
+
+```text
+mute
+muted
+off
+none
+```
+
+推荐统一使用 `silent`，最清楚。
 
 ## 使用自己的音效
 
@@ -79,11 +106,13 @@ my-attention.wav
 my-finished.wav
 ```
 
-然后配置：
+然后把 `config.json` 改成：
 
-```powershell
-$env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "my-attention.wav"
-$env:CLAUDE_MENTION_STOP_SOUND_FILE = "my-finished.wav"
+```json
+{
+  "notification": "my-attention.wav",
+  "stop": "my-finished.wav"
+}
 ```
 
 要求：
@@ -91,6 +120,7 @@ $env:CLAUDE_MENTION_STOP_SOUND_FILE = "my-finished.wav"
 - 必须是 `.wav` 格式。
 - 建议时长控制在 `0.2` 到 `1.5` 秒。
 - 建议音量不要太大，避免频繁提醒时打扰。
+- 建议在 `config.json` 中只写文件名，不写路径。
 
 ## 去哪里下载 WAV 音效
 
@@ -155,8 +185,6 @@ short chime wav
 下载日期：YYYY-MM-DD
 ```
 
-如果你只是自己本机使用，不公开发布，也仍然建议保留来源记录，方便以后追溯。
-
 ## MP3 转 WAV
 
 插件的本地自定义音效只支持 `.wav`。如果下载的是 `.mp3`，需要先转换。
@@ -166,12 +194,6 @@ short chime wav
 ```powershell
 ffmpeg -i input.mp3 -ac 1 -ar 44100 sounds\my-attention.wav
 ```
-
-参数说明：
-
-- `-ac 1`：转成单声道。
-- `-ar 44100`：采样率设为 44100 Hz。
-- `sounds\my-attention.wav`：输出到插件的 `sounds` 文件夹。
 
 ### 使用 Audacity
 
@@ -197,24 +219,25 @@ $env:CLAUDE_MENTION_NOTIFICATION_SOUND_FILE = "gentle-chime.wav"
 
 ## 常见问题
 
-### 放了文件但没有声音
+### 改了 config.json 但没有生效
 
 检查：
 
-- 文件是否真的是 `.wav`。
-- 文件名是否写错。
-- 文件是否放在 `sounds` 文件夹中。
-- 环境变量是否写成了正确的文件名。
-- `CLAUDE_MENTION_SOUND` 是否被设置为 `0`。
-- 系统音量或通知音量是否为 0。
+- `config.json` 是否在 `sounds` 文件夹里。
+- JSON 是否使用英文双引号。
+- 文件名是否和 `.wav` 文件完全一致。
+- 是否多写了逗号。
+- 是否有环境变量覆盖了配置。
 
 ### 想恢复电脑当前默认提示音
 
-清除自定义文件环境变量即可：
+把 `config.json` 改回：
 
-```powershell
-[Environment]::SetEnvironmentVariable("CLAUDE_MENTION_NOTIFICATION_SOUND_FILE", $null, "User")
-[Environment]::SetEnvironmentVariable("CLAUDE_MENTION_STOP_SOUND_FILE", $null, "User")
+```json
+{
+  "notification": "",
+  "stop": ""
+}
 ```
 
-然后重启 Claude Code。未配置自定义音效时，插件会继续使用当前 Windows 通知提示音。
+未配置自定义音效时，插件会使用当前 Windows 通知提示音。

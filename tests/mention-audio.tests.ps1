@@ -30,6 +30,7 @@ $testMp3Path = Join-Path $testAudioDir "custom.mp3"
 $testPluginRoot = Join-Path $PSScriptRoot "tmp-plugin-root"
 $testPluginSoundDir = Join-Path $testPluginRoot "sounds"
 $testPluginWavPath = Join-Path $testPluginSoundDir "plugin-custom.wav"
+$testConfigPath = Join-Path $testPluginSoundDir "config.json"
 
 try {
   New-Item -ItemType Directory -Path $testAudioDir -Force > $null
@@ -37,6 +38,7 @@ try {
   Set-Content -Path $testWavPath -Value "test wav placeholder"
   Set-Content -Path $testMp3Path -Value "test mp3 placeholder"
   Set-Content -Path $testPluginWavPath -Value "plugin wav placeholder"
+  Set-Content -Path $testConfigPath -Value '{"notification":"plugin-custom.wav","stop":"sounds\\plugin-custom.wav"}'
 
   Set-TestEnv "CLAUDE_MENTION_SOUND" $null
   Set-TestEnv "CLAUDE_MENTION_NOTIFICATION_SOUND" $null
@@ -87,6 +89,53 @@ try {
     "plugin sounds folder bare filename"
 
   Assert-Equal `
+    (Get-ClaudeMentionConfiguredSoundFile $testPluginRoot "notification") `
+    "plugin-custom.wav" `
+    "config notification sound file"
+
+  Assert-Equal `
+    (Get-ClaudeMentionConfiguredSoundFile $testPluginRoot "stop") `
+    "sounds\plugin-custom.wav" `
+    "config stop sound file"
+
+  Assert-Equal `
+    (Get-ClaudeMentionEventSoundPath $testPluginRoot "notification" $null) `
+    (Resolve-Path -LiteralPath $testPluginWavPath).Path `
+    "event sound path uses config file"
+
+  Assert-Equal `
+    (Get-ClaudeMentionEventSoundPath $testPluginRoot "notification" $testWavPath) `
+    (Resolve-Path -LiteralPath $testWavPath).Path `
+    "environment sound file overrides config file"
+
+  Assert-Equal `
+    (Test-ClaudeMentionSilentSound "silent") `
+    $true `
+    "silent keyword"
+
+  Assert-Equal `
+    (Test-ClaudeMentionSilentSound "off") `
+    $true `
+    "off keyword"
+
+  Assert-Equal `
+    (Test-ClaudeMentionSilentSound "bright-ping.wav") `
+    $false `
+    "file name is not silent"
+
+  Set-Content -Path $testConfigPath -Value '{"notification":"silent","stop":""}'
+
+  Assert-Equal `
+    (Get-ClaudeMentionEventSoundMode $testPluginRoot "notification" $null) `
+    "silent" `
+    "config can mute notification event"
+
+  Assert-Equal `
+    (Get-ClaudeMentionEventSoundMode $testPluginRoot "stop" $null) `
+    "default" `
+    "empty config uses default sound"
+
+  Assert-Equal `
     (Get-ClaudeMentionCustomSoundPath $testMp3Path) `
     $null `
     "custom non-wav file"
@@ -102,6 +151,11 @@ try {
     (Get-ClaudeMentionCustomSoundPath $testWavPath) `
     $null `
     "custom sound respects global mute"
+
+  Assert-Equal `
+    (Get-ClaudeMentionEventSoundPath $testPluginRoot "notification" $null) `
+    $null `
+    "config sound respects global mute"
 
   Write-Output "Mention audio tests passed"
 } finally {
