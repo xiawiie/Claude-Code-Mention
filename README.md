@@ -51,7 +51,7 @@ claude-code-mention/
 
 ## 安装方式
 
-### 从 GitHub 安装
+### 从 GitHub 安装（推荐，已验证）
 
 仓库地址：
 
@@ -59,20 +59,29 @@ claude-code-mention/
 https://github.com/xiawiie/Claude-Code-Mention
 ```
 
-在 Claude Code 中执行：
+在终端中执行：
 
-```bash
-/plugin install xiawiie/Claude-Code-Mention
+```powershell
+claude plugin marketplace add xiawiie/Claude-Code-Mention --scope user
+claude plugin install mention-notifications@claude-code-mention --scope user
 ```
 
-如果你使用 marketplace 方式：
+安装成功后可以查看插件状态：
 
-```bash
-/plugin marketplace add xiawiie/Claude-Code-Mention
-/plugin install mention-notifications@claude-code-mention
+```powershell
+claude plugin list
 ```
 
-### 本地安装
+你应该能看到类似条目：
+
+```text
+mention-notifications@claude-code-mention
+Status: √ enabled
+```
+
+注意：不要直接执行 `claude plugin install xiawiie/Claude-Code-Mention`。Claude Code CLI 的 `plugin install` 会从已配置的 marketplace 中查找插件，因此必须先执行 `claude plugin marketplace add`。
+
+### 本地安装（开发调试）
 
 如果项目在本机目录中，例如：
 
@@ -80,12 +89,14 @@ https://github.com/xiawiie/Claude-Code-Mention
 E:\Data\ChromeDownload\claude-code-mention
 ```
 
-可以在 Claude Code 中执行：
+可以在终端中执行：
 
-```bash
-/plugin marketplace add E:\Data\ChromeDownload\claude-code-mention
-/plugin install mention-notifications@claude-code-mention
+```powershell
+claude plugin marketplace add E:\Data\ChromeDownload\claude-code-mention --scope user
+claude plugin install mention-notifications@claude-code-mention --scope user
 ```
+
+如果只是临时测试，不想写入全局用户配置，可以把 `--scope user` 改成 `--scope local`，并在临时目录中执行。
 
 ## 使用方式
 
@@ -353,6 +364,12 @@ $player.PlaySync()
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\mention-audio.tests.ps1
+```
+
+也建议验证插件 manifest：
+
+```powershell
+claude plugin validate .
 ```
 
 并确认以下文件都在仓库中：
