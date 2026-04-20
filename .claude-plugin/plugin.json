@@ -1,0 +1,8 @@
+{
+  "name": "claude-code-mention",
+  "description": "Windows notifications for Claude Code events using native Windows APIs",
+  "version": "1.0.1",
+  "author": {
+    "name": "Wei"
+  }
+}

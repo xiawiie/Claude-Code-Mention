@@ -1,0 +1,23 @@
+{
+  "name": "claude-code-mention",
+  "owner": {
+    "name": "Wei"
+  },
+  "metadata": {
+    "description": "Windows notifications for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "mention-notifications",
+      "source": "./",
+      "description": "Windows notifications for Claude Code events using native Windows APIs",
+      "version": "1.0.0",
+      "author": {
+        "name": "Wei"
+      },
+      "license": "MIT",
+      "keywords": ["windows", "notifications", "hooks"]
+    }
+  ]
+}
